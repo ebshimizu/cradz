@@ -4,7 +4,6 @@ var fs = require('fs');
 var Cradz = require('./Cradz.js')
 
 // server crap
-
 app.listen(80);
 
 function handler(req, res) {
@@ -65,7 +64,8 @@ var blackCardDeck = [];
 
 io.on('connection', function (socket) {
   console.log("Connection from socket ID " + socket.id);
-  players[socket.id] = new Cradz.Player(socket);
+  players.set(socket.id, new Cradz.Player(socket));
+  console.log("Players: " + players.size);
 
   if (players.size === 1) {
     // first player is the host (just go with it for now)
@@ -81,18 +81,53 @@ io.on('connection', function (socket) {
   });
 
   socket.on('setName', function (name) {
-    players[socket.id].name = name;
+    players.get(socket.id).name = name;
     console.log("Set player " + socket.id + " name to " + name);
   });
 
   socket.on('setPointsToWin', function (points) {
     if (host !== socket.id) {
-      
+      socket.emit('gameError', "nice try nerd, you're not the host, so you can't set the points to win.");
     }
+    else {
+      pointsToWin = points;
+      console.log("Points to win: " + pointsToWin);
+    }
+  });
+
+  socket.on('startGame', function () {
+    if (host !== socket.id) {
+      socket.emit('gameError', 'Only the Host can start a game.');
+    }
+
+    // construct decks
+    // check that we have enough cards
+    // clear player hands
+    // shuffle decks
+    // draw player hands
+    // set turn order
+    // choose the first card czar
+  });
+
+  // stubbing player actions
+  socket.on('playWhiteCard', function (cardID) {
+    // check that player has that card
+    // play the card
+    // remove the card from the player's hand
+    // if pick count has been met, player is prevented from playing more cards.
+  });
+
+  socket.on('cardCzarSelect', function (groupID) {
+    // check that the player is the card czar
+    // select the card/set of cards the judge likes
+    // assign points
+    // players draw cards (except card czar)
+    // control transfers to next card czar
   });
 });
 
 function setHost(id) {
   host = id;
-  players[id].socket.emit('setHost');
+  players.get(id).socket.emit('setHost');
+  console.log("Set host to " + id);
 }

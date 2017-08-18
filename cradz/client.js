@@ -9,6 +9,10 @@ socket.on('setHost', function () {
   console.log("You have been selected as Host.");
 });
 
+socket.on('gameError', function (message) {
+  console.log("Error: " + message);
+});
+
 // stubbing events the socket can initiate
 function setName(name) {
   socket.emit('setName', name);
