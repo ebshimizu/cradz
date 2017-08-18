@@ -1,0 +1,13 @@
+{
+  "name": "cradz",
+  "version": "0.0.1",
+  "description": "cradz",
+  "main": "server.js",
+  "author": {
+    "name": "falindrith"
+  },
+  "dependencies": {
+    "socket.io": "^2.0.3",
+    "semantic-ui": "^2.2.13"
+  }
+}
