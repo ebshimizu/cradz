@@ -17,6 +17,13 @@ meant to let you set up a nice looking version of cah on your own server if you 
 technical know-how to do that.
 
 ## Installation
-Clone into directory. Go to the `cradz` directory and run `npm install`
+Clone into directory. Go to the `cradz` directory and run `npm install`.
 To get semantic ui working, go to the created `semantic` directory and run
-`gulp install`
+`gulp install`.
+
+## Running the Server
+`node server.js`
+
+Then open a browser and go to `localhost`. If you are actually trying to run this
+project right now, you should look at the `client.js` file to figure out the
+available commands.
