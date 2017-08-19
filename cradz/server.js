@@ -60,6 +60,16 @@ var turn;
 var currentBlackCard;
 var playersDone;
 
+// for judging
+var revealHiddenKey;
+var revealCards;
+
+// only a few states here
+// WHITE_CARDS: players can play white cards
+// JUDGE: card czar can act
+// SETUP: internal setup phase
+var currentPhase;
+
 // reconnect events:
 // should have client cache the socket id and send that to the server. the server should
 // somehow then remap the old id to the new id
@@ -104,6 +114,8 @@ io.on('connection', function (socket) {
       return;
     }
 
+    currentPhase = "SETUP";
+
     // construct decks
     loadDecks();
 
@@ -139,6 +151,11 @@ io.on('connection', function (socket) {
 
   // stubbing player actions
   socket.on('playWhiteCard', function (cardID) {
+    if (currentPhase != "WHITE_CARDS") {
+      socket.emit('gameError', "You can't play white cards right now");
+      return;
+    }
+
     var success = players.get(socket.id).playCard(cardID);
 
     // check if the player is done playing cards.
@@ -275,9 +292,36 @@ function startTurn() {
   players.forEach(function (player, id, map) {
     player.turnSetup(currentBlackCard.pick);
   });
+
+  currentPhase = "WHITE_CARDS";
 }
 
 function judgePhase() {
   // this is when the picks are revealed and the card czar does the judging
-  // randomized IDs are assigned to the groups for anonymity
+  // randomize the order of the groups
+  currentPhase = "JUDGE";
+
+  var order = turnOrder;
+  revealHiddenKey = {};
+  revealCards = {};
+
+  Cradz.shuffleArray(order);
+
+  // create the hidden key
+  for (var i = 0; i < order.length; i++) {
+    revealHiddenKey[i] = order[i];
+  }
+
+  console.log(revealHiddenKey);
+  
+  // create the reveal map
+  for (var i = 0; i < order.length; i++) {
+    var cardsPlayed = players.get(order[i]).cardsPlayed;
+    revealCards[i] = cardsPlayed;
+  }
+
+  console.log(revealCards);
+
+  // send to all players, allow judge to make a selection
+  io.sockets.emit('cardsRevealed', revealCards);
 }

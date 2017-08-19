@@ -48,6 +48,10 @@ socket.on('anonFinished', function (total) {
   console.log("another player has finished playing their cards");
 });
 
+socket.on('cardsRevealed', function (cards) {
+  console.log(cards);
+})
+
 // stubbing events the socket can initiate
 function setName(name) {
   socket.emit('setName', name);
