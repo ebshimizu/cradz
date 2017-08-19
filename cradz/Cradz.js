@@ -5,6 +5,7 @@
     this.isJudge = false;
     this.cardsPlayed = [];
     this.pick = 0;
+    this.points = 0;
   }
 
   set namne(name) {
@@ -23,6 +24,8 @@
   addToHand(card) {
     this.hand.set(card.id, card);
     this.socket.emit('drawHand', card);
+
+    console.log("Player " + this.socket.id + " drew card " + card.text + " (" + card.id + "). Now has " + this.hand.size + " cards.");
   }
 
   setJudge() {
@@ -67,6 +70,9 @@
     }
   }
 
+  addPoint() {
+    this.points++;
+  }
 }
 
 class Card {

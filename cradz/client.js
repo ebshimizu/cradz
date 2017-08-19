@@ -50,7 +50,11 @@ socket.on('anonFinished', function (total) {
 
 socket.on('cardsRevealed', function (cards) {
   console.log(cards);
-})
+});
+
+socket.on('gameOver', function (winner) {
+  console.log(winner + " won the game!");
+});
 
 // stubbing events the socket can initiate
 function setName(name) {
@@ -63,4 +67,8 @@ function startGame() {
 
 function playCard(id) {
   socket.emit('playWhiteCard', id);
+}
+
+function pickFavorite(id) {
+  socket.emit('cardCzarSelect', id);
 }

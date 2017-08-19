@@ -172,9 +172,56 @@ io.on('connection', function (socket) {
   });
 
   socket.on('cardCzarSelect', function (groupID) {
+    if (currentPhase != "JUDGE") {
+      socket.emit('gameError', "You can't judge things right now");
+      return;
+    }
+
     // check that the player is the card czar
+    if (socket.id != cardCzar) {
+      socket.emit('gameError', "You are not the Czar. You can't judge cards.");
+      return;
+    }
+
     // select the card/set of cards the judge likes
-    // assign points
+    var key = revealHiddenKey[groupID];
+    if (revealCards[groupID].length == 0) {
+      socket.emit('gameError', "The player you selected did not play cards.");
+      return;
+    }
+    else {
+      // assign points
+      players.get(key).addPoint();
+      console.log("Player " + key + " won. Now has " + players.get(key).points + " points");
+
+      // check victory conditions
+      if (players.get(key).points >= pointsToWin) {
+        io.sockets.emit("gameOver", player.get(key).name);
+        // something something reset to config menu
+        return;
+      }
+
+      // update scores
+      var scores = {};
+      players.forEach(function (player, id, map) {
+        scores[id] = player.points;
+      });
+      io.sockets.emit('updateScores', scores);
+
+      // players draw cards
+      players.forEach(function (player, id, map) {
+        if (id === cardCzar)
+          return;
+
+        for (var i = 0; i < player.pick; i++) {
+          player.addToHand(whiteCardDeck.draw());
+        }
+      });
+
+      // control transfers to next card czar
+      startTurn();
+    }
+
     // players draw cards (except card czar)
     // control transfers to next card czar
   });
@@ -222,6 +269,7 @@ function loadDecks() {
 
 function checkCardCount() {
   // 10 card hands
+  // TODO: I forgot about the existence of pick 2/3 so the min should account for that
   var maxRounds = pointsToWin * (players.size - 1) + 1;
   var minWhiteCards = maxRounds * players.size + 10 * players.size;
   var minBlackCards = maxRounds;
@@ -251,7 +299,6 @@ function dealStartHands() {
     players.forEach(function (player, id, map) {
       var card = whiteCardDeck.draw();
       player.addToHand(card);
-      console.log("Player " + id + " has drawn card " + card.text + " (" + card.id + ")");
     });
   }
 }
