@@ -44,24 +44,27 @@ var pointsToWin = 10;
 
 // map: socket.id -> player object
 var players = new Map();
-
 var host;
 
 // current card judge
-var cradCzar;
-
-// sets of the cards. id -> card object. players hands consist of an array of these ids.
-var whiteCardList;
-var blackCardList;
+var cardCzar;
 
 // current set of available cards
-var whiteCardDeck = [];
-var blackCardDeck = [];
+var whiteCardDeck;
+var blackCardDeck;
+
+// turn order
+var turnOrder;
+var turn;
+
+var currentBlackCard;
+var playersDone;
 
 // reconnect events:
 // should have client cache the socket id and send that to the server. the server should
 // somehow then remap the old id to the new id
 
+// network layer
 io.on('connection', function (socket) {
   console.log("Connection from socket ID " + socket.id);
   players.set(socket.id, new Cradz.Player(socket));
@@ -98,23 +101,57 @@ io.on('connection', function (socket) {
   socket.on('startGame', function () {
     if (host !== socket.id) {
       socket.emit('gameError', 'Only the Host can start a game.');
+      return;
     }
 
     // construct decks
+    loadDecks();
+
     // check that we have enough cards
+    var canStart = checkCardCount();
+    if (!canStart) {
+      // checkCardCount() fires a message to users in event of failure
+      return;
+    }
+
     // clear player hands
+    clearHands();
+
     // shuffle decks
+    blackCardDeck.reshuffle();
+    whiteCardDeck.reshuffle();
+
     // draw player hands
+    dealStartHands();
+
     // set turn order
+    setTurnOrder();
+
+    // start the game (allow UI to set up)
+    io.sockets.emit('gameStart');
+
     // choose the first card czar
+    setCardCzar(0);
+
+    // set up turn variables
+    startTurn();
   });
 
   // stubbing player actions
   socket.on('playWhiteCard', function (cardID) {
-    // check that player has that card
-    // play the card
-    // remove the card from the player's hand
-    // if pick count has been met, player is prevented from playing more cards.
+    var success = players.get(socket.id).playCard(cardID);
+
+    // check if the player is done playing cards.
+    if (success) {
+      if (players.get(socket.id).cardsPlayed.length >= players.get(socket.id).pick) {
+        playersDone++;
+        io.sockets.emit('anonFinished', playersDone);
+
+        if (playersDone >= players.size - 1) {
+          judgePhase();
+        }
+      }
+    }
   });
 
   socket.on('cardCzarSelect', function (groupID) {
@@ -126,8 +163,121 @@ io.on('connection', function (socket) {
   });
 });
 
+// game functions
+
 function setHost(id) {
   host = id;
   players.get(id).socket.emit('setHost');
   console.log("Set host to " + id);
+}
+
+function loadDecks() {
+  // TODO: user select for multiple deck types
+  var cardSet = JSON.parse(fs.readFileSync("./data/base_set.json"));
+  var cardID = 0;
+
+  // load black cards
+  var blackCards = cardSet["blackCards"];
+  blackCardDeck = new Cradz.Deck();
+
+  for (var i in blackCards) {
+    var c = blackCards[i];
+    blackCardDeck.addCard(new Cradz.Card(cardID, c.text, c.pick));
+
+    console.log("Added black card " + c.text + " (" + cardID + ")");
+
+    cardID++;
+  }
+
+  // white cards
+  var whiteCards = cardSet["whiteCards"];
+  whiteCardDeck = new Cradz.Deck();
+  for (var i in whiteCards) {
+    whiteCardDeck.addCard(new Cradz.Card(cardID, whiteCards[i], 1));
+
+    console.log("Added white card " + whiteCards[i] + " (" + cardID + ")");
+
+    cardID++;
+  }
+
+  console.log("Decks loaded. " + blackCardDeck.cardCount + " black cards, " + whiteCardDeck.cardCount + " white cards");
+}
+
+function checkCardCount() {
+  // 10 card hands
+  var maxRounds = pointsToWin * (players.size - 1) + 1;
+  var minWhiteCards = maxRounds * players.size + 10 * players.size;
+  var minBlackCards = maxRounds;
+
+  console.log("Required white cards: " + minWhiteCards + "\nRequired Black Cards: " + minBlackCards);
+
+  if (whiteCardDeck.cardCount < minWhiteCards || blackCardDeck.cardCount < minBlackCards) {
+    notEnoughCards(minWhiteCards, minBlackCards, whiteCardDeck.cardCount, blackCardDeck.cardCount);
+    return false;
+  }
+
+  return true;
+}
+
+function notEnoughCards(reqWhite, reqBlack, haveWhite, haveBlack) {
+  io.sockets.emit('cardCountFail', reqWhite, reqBlack, haveWhite, haveBlack);
+}
+
+function clearHands() {
+  players.forEach(function (player, key, map) {
+    player.clearHand();
+  });
+}
+
+function dealStartHands() {
+  for (var i = 0; i < 10; i++) {
+    players.forEach(function (player, id, map) {
+      var card = whiteCardDeck.draw();
+      player.addToHand(card);
+      console.log("Player " + id + " has drawn card " + card.text + " (" + card.id + ")");
+    });
+  }
+}
+
+function setTurnOrder() {
+  turnOrder = [];
+  players.forEach(function (player, id, map) {
+    turnOrder.push(id);
+  });
+
+  Cradz.shuffleArray(turnOrder);
+  console.log("Turn order set");
+  console.log(turnOrder);
+
+  turn = 0;
+}
+
+function setCardCzar(turn) {
+  // based on turn, will pick a card czar
+  players.forEach(function (player, id, map) {
+    player.unsetJudge();
+  });
+
+  cardCzar = turnOrder[turn % players.size];
+  players.get(cardCzar).setJudge();
+  turn++;
+
+  console.log("Turn " + turn + " Czar is " + cardCzar);
+}
+
+function startTurn() {
+  // a black card is dealt
+  currentBlackCard = blackCardDeck.draw();
+  playersDone = 0;
+  io.sockets.emit('setBlackCard', currentBlackCard);
+
+  // players have a quota of cards to play based on the black card's pick value
+  players.forEach(function (player, id, map) {
+    player.turnSetup(currentBlackCard.pick);
+  });
+}
+
+function judgePhase() {
+  // this is when the picks are revealed and the card czar does the judging
+  // randomized IDs are assigned to the groups for anonymity
 }

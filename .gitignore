@@ -3,3 +3,5 @@ cradz/semantic/dist/*
 cradz/semantic/src/*
 cradz/semantic/tasks/*
 cradz/semantic/gulpfile.js
+.vs/cradz/v15/.suo
+.vs/config/applicationhost.config

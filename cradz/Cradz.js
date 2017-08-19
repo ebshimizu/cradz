@@ -1,6 +1,10 @@
 ﻿class Player {
   constructor(socket) {
     this.socket = socket;
+    this.hand = new Map();
+    this.isJudge = false;
+    this.cardsPlayed = [];
+    this.pick = 0;
   }
 
   set namne(name) {
@@ -11,12 +15,58 @@
     return this.name;
   }
 
-  // player needs:
-  // -hand
-  // --play card
-  // --draw card(card)
-  // -points
-  // -isJudge (determine if can play hand)
+  clearHand() {
+    this.hand = new Map();
+    this.socket.emit('clearHand');
+  }
+
+  addToHand(card) {
+    this.hand.set(card.id, card);
+    this.socket.emit('drawHand', card);
+  }
+
+  setJudge() {
+    this.isJudge = true;
+    this.socket.emit('setCardCzar');
+  }
+
+  unsetJudge() {
+    this.isJudge = false;
+    this.socket.emit('deposeCardCzar');
+  }
+
+  turnSetup(pick) {
+    this.cardsPlayed = [];
+    this.pick = pick;
+  }
+
+  playCard(cardID) {
+    // check that player has that card
+    if (this.hand.has(cardID)) {
+      if (this.isJudge) {
+        this.socket.emit('gameError', "The Card Czar cannot play white cards.");
+        return false;
+      }
+      // if pick count has been met, player is prevented from playing more cards.
+      if (this.cardsPlayed.length >= this.pick) {
+        this.socket.emit('gameError', "You have already played your cards this turn");
+        return false;
+      }
+
+      // play the card
+      this.cardsPlayed.push(this.hand.get(cardID));
+      console.log('Player ' + this.socket.id + ' played card ' + cardID);
+
+      this.socket.emit('playedCard', this.hand.get(cardID));
+      this.hand.delete(cardID);
+      return true;
+    }
+    else {
+      this.socket.emit('gameError', "You don't have that card.");
+      return false;
+    }
+  }
+
 }
 
 class Card {
@@ -48,6 +98,10 @@ class Deck {
     return this.cards.length;
   }
 
+  get cardCount() {
+    return this.cardList.size;
+  }
+  
   // Decks are only allowed to have one of each unique ID card
   // if you add cards to the deck, make sure you call reshuffle()
   // before drawing.
@@ -97,3 +151,4 @@ function shuffleArray(a) {
 exports.Player = Player;
 exports.Card = Card;
 exports.Deck = Deck;
+exports.shuffleArray = shuffleArray;
