@@ -24,6 +24,12 @@ function handler(req, res) {
   else if (/[\w\d]+.css/.test(file)) {
     contentType = "text/css";
   }
+  else if (/[\w\d]+.jpg/.test(file)) {
+    contentType = "image/jpeg";
+  }
+  else if (/[\w\d]+.png/.test(file)) {
+    contentType = "image/png";
+  }
 
   fs.readFile(__dirname + file,
   function (err, data) {

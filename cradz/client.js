@@ -1,5 +1,44 @@
 ﻿var socket = io('http://localhost');
 
+$(document).ready(function () {
+  // initialization code
+  $('#hand').isotope({
+    itemSelector: '.card',
+    layourMode: 'fitRows'
+  });
+});
+
+// ui functions
+function createBlackCard(text, pick) {
+  var html = '<div class="ui fluid card">';
+  html += '<div class="content">';
+  html += '<div class="header">' + text + '</div>';
+  html += '<div class="meta">Pick ' + pick + '</div>';
+  html += '</div></div>';
+
+  return html;
+}
+
+function createWhiteCard(text, id) {
+  var html = '<div class="ui card" cardID="' + id + '">';
+  html += '<div class="content">';
+  html += '<div class="header">' + text + '</div>';
+  html += '</div></div>';
+
+  return html;
+}
+
+function updateBlackCard(card) {
+  var newCard = createBlackCard(card.text, card.pick);
+  $('#blackCard').html(newCard);
+}
+
+function addWhiteCardToHand(card) {
+  var card = $(createWhiteCard(card.text, card.id));
+
+  $('#hand').append(card).isotope('appended', card);
+}
+
 // stubbing events the socket can respond to.
 socket.on('connect', function () {
   console.log("Connected to server.");
@@ -26,6 +65,7 @@ socket.on('clearHand', function () {
 
 socket.on('drawHand', function (card) {
   console.log('Card added to hand: ' + card.text + " (" + card.id + ")");
+  addWhiteCardToHand(card);
 });
 
 socket.on('gameStart', function () {
@@ -42,6 +82,7 @@ socket.on('deposeCardCzar', function () {
 
 socket.on('setBlackCard', function (card) {
   console.log("Black card is: " + card.text + " pick " + card.pick);
+  updateBlackCard(card);
 });
 
 socket.on('anonFinished', function (total) {
