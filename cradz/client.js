@@ -2,7 +2,7 @@
 
 $(document).ready(function () {
   // initialization code
-  $('#hand').isotope({
+  $('#hand .iso').isotope({
     itemSelector: '.card',
     layourMode: 'fitRows'
   });
@@ -36,7 +36,19 @@ function updateBlackCard(card) {
 function addWhiteCardToHand(card) {
   var card = $(createWhiteCard(card.text, card.id));
 
-  $('#hand').append(card).isotope('appended', card);
+  $('#hand .iso').append(card).isotope('appended', card);
+  $('#hand .iso').isotope('layout');
+
+  // event binding
+  $(card).click(function () {
+    var id = parseInt($(this).attr('cardID'));
+    playCard(id);
+  });
+}
+
+function initUI() {
+  // remove black card
+  $('#blackCard').html('');
 }
 
 // stubbing events the socket can respond to.
@@ -60,6 +72,8 @@ socket.on('cardCountFail', function (rw, rb, hw, hb) {
 
 socket.on('clearHand', function () {
   // delete hand stuff
+  $('#hand .iso').html('');
+
   console.log('Hand cleared');
 });
 
@@ -69,7 +83,7 @@ socket.on('drawHand', function (card) {
 });
 
 socket.on('gameStart', function () {
-  console.log('init game UI here');
+  //initUI();
 });
 
 socket.on('setCardCzar', function () {
@@ -83,6 +97,12 @@ socket.on('deposeCardCzar', function () {
 socket.on('setBlackCard', function (card) {
   console.log("Black card is: " + card.text + " pick " + card.pick);
   updateBlackCard(card);
+});
+
+socket.on('playedCard', function (card) {
+  // remove the specified card
+  var c = $('.card[cardID="' + card.id + '"]');
+  $('#hand .iso').isotope('remove', c).isotope('layout');
 });
 
 socket.on('anonFinished', function (total) {

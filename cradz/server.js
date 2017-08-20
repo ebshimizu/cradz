@@ -139,14 +139,14 @@ io.on('connection', function (socket) {
     blackCardDeck.reshuffle();
     whiteCardDeck.reshuffle();
 
+    // start the game (allow UI to set up)
+    io.sockets.emit('gameStart');
+
     // draw player hands
     dealStartHands();
 
     // set turn order
     setTurnOrder();
-
-    // start the game (allow UI to set up)
-    io.sockets.emit('gameStart');
 
     // choose the first card czar
     setCardCzar(0);

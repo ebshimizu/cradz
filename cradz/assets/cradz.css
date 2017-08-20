@@ -52,3 +52,12 @@
     height: 200px;
     margin: 1em;
 }
+
+#hand .card:hover {
+    background-color: #67ff89;
+    cursor: pointer;
+}
+
+#hand .iso {
+    width: 100%;
+}
