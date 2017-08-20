@@ -32,12 +32,24 @@
 }
 
 #scoreboard {
-    background-color: #FFF;
     position: relative;
     width: 250px;
-    padding: 10px;
     height: 100%;
     float: left;
+    padding: 10px;
+}
+
+#scoreboard .segment {
+    overflow-y: auto;
+    max-height: 100%;
+}
+
+#scoreboard .list .item.judge {
+    background-color: #ffef79;
+}
+
+#scoreboard .list .item {
+    padding: 5px;
 }
 
 #hand {
@@ -54,7 +66,7 @@
 }
 
 #hand .card:hover {
-    background-color: #67ff89;
+    background-color: #ffef79;
     cursor: pointer;
 }
 
