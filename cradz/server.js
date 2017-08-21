@@ -30,6 +30,16 @@ function handler(req, res) {
   else if (/[\w\d]+.png/.test(file)) {
     contentType = "image/png";
   }
+  else if (/[\w\d]+.woff/.test(file)) {
+    contentType = "font/woff";
+  }
+  else if (/[\w\d]+.woff2/.test(file)) {
+    contentType = "font/woff2";
+  }
+  else if (/[\w\d]+.ttf/.test(file)) {
+    contentType = "font/ttf";
+  }
+  
 
   fs.readFile(__dirname + file,
   function (err, data) {
@@ -91,17 +101,32 @@ io.on('connection', function (socket) {
     setHost(socket.id);
   }
 
+  // send new player joined events to update the scoreboard
+  players.forEach(function (player, id, map) {
+    socket.emit('newPlayerJoined', id, player.name);
+  });
+
   socket.on('disconnect', function () {
     // want to not really delete the player but instead mark them as offline
     // for now delete to keep clean
     console.log("Disconnect from socket ID " + socket.id);
     players.delete(socket.id);
+
+    // TODO: this is not robust. If a player DCs, they are still in the turn order,
+    // and this will definitely cause problems. Nothing about the current
+    // code is robust to this situation and if a player DCs right now the server should
+    // be treated as unstable
+
+    io.sockets.emit('playerDC', socket.id);
     // replace with setOffline(socket.id); at some point
   });
 
   socket.on('setName', function (name) {
     players.get(socket.id).name = name;
     console.log("Set player " + socket.id + " name to " + name);
+
+    // add to all connected scoreboards
+    io.sockets.emit('newPlayerJoined', socket.id, name);
   });
 
   socket.on('setPointsToWin', function (points) {
@@ -333,8 +358,12 @@ function setCardCzar() {
     player.unsetJudge();
   });
 
+  console.log("selection id: " + turn % players.size);
+  console.log(turnOrder);
+
   cardCzar = turnOrder[turn % players.size];
   players.get(cardCzar).setJudge();
+  io.sockets.emit('whoIsCardCzar', cardCzar);
   turn++;
 
   console.log("Turn " + turn + " Czar is " + cardCzar);
@@ -359,7 +388,7 @@ function judgePhase() {
   // randomize the order of the groups
   currentPhase = "JUDGE";
 
-  var order = turnOrder;
+  var order = turnOrder.slice();
   revealHiddenKey = {};
   revealCards = {};
 

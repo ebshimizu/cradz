@@ -6,14 +6,7 @@
     this.cardsPlayed = [];
     this.pick = 0;
     this.points = 0;
-  }
-
-  set namne(name) {
-    this.name = name;
-  }
-
-  get name() {
-    return this.name;
+    this.name = '';
   }
 
   clearHand() {

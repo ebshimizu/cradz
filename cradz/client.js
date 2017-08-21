@@ -35,6 +35,7 @@ function createWhiteCard(text, id) {
 }
 
 function updateBlackCard(card) {
+  console.log("Black card is: " + card.text + " pick " + card.pick);
   var newCard = createBlackCard(card.text, card.pick);
   $('#blackCard').html(newCard);
 
@@ -43,6 +44,8 @@ function updateBlackCard(card) {
 }
 
 function addWhiteCardToHand(card) {
+  console.log('Card added to hand: ' + card.text + " (" + card.id + ")");
+
   var card = $(createWhiteCard(card.text, card.id));
 
   $('#hand .iso').append(card).isotope('appended', card);
@@ -111,14 +114,64 @@ function createCardGroup(cards, key) {
   return cardElem;
 }
 
+function addPlayer(id, name) {
+  // check if the player already exists
+  if ($('.item[playerID="' + id + '"]').length === 0) {
+    var elem = '<div class="item" playerID="' + id + '">';
+    elem += '<div class="content">';
+    elem += '<div class="header"></div>';
+    elem += '<div class="description">0 points</div>';
+    elem += '</div></div>';
+
+    $('#scoreboard .list').append(elem);
+  }
+
+  // let jquery sanitize
+  $('.item[playerID="' + id + '"] .header').text(name); 
+}
+
+function deletePlayer(id) {
+  $('.item[playerID="' + id + '"]').remove();
+}
+
 function initUI() {
   // remove black card
   $('#blackCard').html('');
 }
 
+function checkName() {
+  var name = $('#nameInput input').val();
+
+  // check non-empty, whitespace is empty
+  if (name === '' || !(/\s*\S+/.test(name))) {
+    $('#nameInput').transition('pulse');
+    return false;
+  }
+
+  setName(name);
+  return true;
+}
+
+function updateScores(scores) {
+  for (var key in scores) {
+    $('.item[playerID="' + key + '"] .description').text(scores[key] + " points");
+  }
+}
+
+function updateCzar(id) {
+  $('#scoreboard .item').removeClass('judge');
+  $('.item[playerID="' + id + '"]').addClass('judge');
+}
+
 // stubbing events the socket can respond to.
 socket.on('connect', function () {
   console.log("Connected to server.");
+
+  // immediately lock them behind the modal
+  $('#nameModal').modal({
+    closable: false,
+    onApprove: checkName
+  }).modal('show')
 });
 
 socket.on('setHost', function () {
@@ -142,14 +195,8 @@ socket.on('clearHand', function () {
   console.log('Hand cleared');
 });
 
-socket.on('drawHand', function (card) {
-  console.log('Card added to hand: ' + card.text + " (" + card.id + ")");
-  addWhiteCardToHand(card);
-});
-
-socket.on('gameStart', function () {
-  initUI();
-});
+socket.on('drawHand', addWhiteCardToHand);
+socket.on('gameStart', initUI);
 
 socket.on('setCardCzar', function () {
   isJudge = true;
@@ -161,10 +208,7 @@ socket.on('deposeCardCzar', function () {
   console.log("you are no longer the card czar");
 });
 
-socket.on('setBlackCard', function (card) {
-  console.log("Black card is: " + card.text + " pick " + card.pick);
-  updateBlackCard(card);
-});
+socket.on('setBlackCard', updateBlackCard);
 
 socket.on('playedCard', function (card) {
   // remove the specified card
@@ -184,6 +228,19 @@ socket.on('cardsRevealed', function (cards) {
 socket.on('gameOver', function (winner) {
   console.log(winner + " won the game!");
 });
+
+socket.on('newPlayerJoined', function (id, displayName) {
+  // scoreboard update with new player
+  addPlayer(id, displayName);
+});
+
+socket.on('playerDC', function (id) {
+  // for now this deletes the player
+  deletePlayer(id);
+});
+
+socket.on('updateScores', updateScores);
+socket.on('whoIsCardCzar', updateCzar);
 
 // stubbing events the socket can initiate
 function setName(name) {
