@@ -200,11 +200,13 @@ socket.on('gameStart', initUI);
 
 socket.on('setCardCzar', function () {
   isJudge = true;
+  $('#judgeDimmer').dimmer('show');
   console.log("you are the card czar for this turn");
 });
 
 socket.on('deposeCardCzar', function () {
   isJudge = false;
+  $('#judgeDimmer').dimmer('hide');
   console.log("you are no longer the card czar");
 });
 
