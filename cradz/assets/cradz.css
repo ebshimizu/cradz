@@ -1,3 +1,7 @@
+.clear {
+    clear: both;
+}
+
 #field {
     background-color: #D3D3D3;
     width: 100%;
@@ -17,6 +21,7 @@
     height: 100%;
     padding: 10px;
     width: 250px;
+    float: left;
 }
 
 #blackCard .card {
@@ -24,6 +29,50 @@
     color: #FFFFFF;
     min-height: 250px;
     font-size: 12pt;
+}
+
+#playArea {
+    width: calc(100% - 250px);
+    position: relative;
+    overflow-y: auto;
+    height: 100%;
+}
+
+#playArea .iso {
+    width: 100%;
+}
+
+#playArea .card {
+    width: 200px;
+    height: 200px;
+    margin: 10px;
+    float: left;
+}
+
+#playArea .single.cardGroup .card:hover {
+    background-color: #ffef79;
+    cursor: pointer;
+}
+
+#playArea .multi.cardGroup {
+    display: block;
+    height: 220px;
+    border: 1px solid #1c1d1e;
+    border-radius: 5px;
+    margin: 5px;
+}
+
+#playArea .multi.cardGroup:hover {
+    background-color: #ffef79;
+    cursor: pointer;
+}
+
+#playArea .two.multi.cardGroup {
+    width: 442px;
+}
+
+#playArea .three.multi.cardGroup {
+    width: 662px;
 }
 
 #blackCard .card .content .header,

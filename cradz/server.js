@@ -149,7 +149,8 @@ io.on('connection', function (socket) {
     setTurnOrder();
 
     // choose the first card czar
-    setCardCzar(0);
+    turn = 0;
+    setCardCzar();
 
     // set up turn variables
     startTurn();
@@ -224,7 +225,11 @@ io.on('connection', function (socket) {
         }
       });
 
+      // TODO: This should be on a delay
       // control transfers to next card czar
+      setCardCzar();
+
+      // turn resets
       startTurn();
     }
 
@@ -322,7 +327,7 @@ function setTurnOrder() {
   turn = 0;
 }
 
-function setCardCzar(turn) {
+function setCardCzar() {
   // based on turn, will pick a card czar
   players.forEach(function (player, id, map) {
     player.unsetJudge();
