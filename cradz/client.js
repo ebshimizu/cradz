@@ -134,6 +134,15 @@ function deletePlayer(id) {
   $('.item[playerID="' + id + '"]').remove();
 }
 
+function setTurnOrder(turnOrder) {
+  for (var i in turnOrder) {
+    var id = turnOrder[i];
+
+    var elem = $('.item[playerID="' + id + '"]').detach();
+    $('#scoreboard .list').append(elem);
+  }
+}
+
 function initUI() {
   // remove black card
   $('#blackCard').html('');
@@ -243,6 +252,7 @@ socket.on('playerDC', function (id) {
 
 socket.on('updateScores', updateScores);
 socket.on('whoIsCardCzar', updateCzar);
+socket.on('setTurnOrder', setTurnOrder);
 
 // stubbing events the socket can initiate
 function setName(name) {

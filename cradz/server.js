@@ -349,6 +349,8 @@ function setTurnOrder() {
   console.log("Turn order set");
   console.log(turnOrder);
 
+  io.sockets.emit('setTurnOrder', turnOrder);
+
   turn = 0;
 }
 
