@@ -30,6 +30,11 @@ $(document).ready(function () {
       }
     }
   });
+
+  $('#startGame').click(function () {
+    if (isHost)
+      socket.emit('startGame');
+  })
 });
 
 // ui functions
@@ -164,6 +169,9 @@ function setTurnOrder(turnOrder) {
 function initUI() {
   // remove black card
   $('#blackCard').html('');
+
+  // hide settings
+  $('#settings').transition('drop out');
 }
 
 function checkName() {

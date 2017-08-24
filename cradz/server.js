@@ -301,34 +301,44 @@ function setHost(id) {
 }
 
 function loadDecks() {
-  // TODO: user select for multiple deck types
-  var cardSet = JSON.parse(fs.readFileSync("./data/base_set.json"));
   var cardID = 0;
-
-  // load black cards
-  var blackCards = cardSet["blackCards"];
   blackCardDeck = new Cradz.Deck();
-
-  for (var i in blackCards) {
-    var c = blackCards[i];
-    blackCardDeck.addCard(new Cradz.Card(cardID, c.text, c.pick));
-
-    console.log("Added black card " + c.text + " (" + cardID + ")");
-
-    cardID++;
-  }
-
-  // white cards
-  var whiteCards = cardSet["whiteCards"];
   whiteCardDeck = new Cradz.Deck();
-  for (var i in whiteCards) {
-    whiteCardDeck.addCard(new Cradz.Card(cardID, whiteCards[i], 1));
 
-    console.log("Added white card " + whiteCards[i] + " (" + cardID + ")");
+  for (var i in activeDecks) {
+    var deckInfo = availableDecks[activeDecks[i]];
 
-    cardID++;
+    if (deckInfo.type === "file") {
+      // load from a file
+      var cardSet = JSON.parse(fs.readFileSync('./data/' + deckInfo.path));
+
+      // load black cards
+      var blackCards = cardSet["blackCards"];
+
+      for (var i in blackCards) {
+        var c = blackCards[i];
+        blackCardDeck.addCard(new Cradz.Card(cardID, c.text, c.pick));
+
+        console.log("Added black card " + c.text + " (" + cardID + ")");
+
+        cardID++;
+      }
+
+      // white cards
+      var whiteCards = cardSet["whiteCards"];
+      for (var i in whiteCards) {
+        whiteCardDeck.addCard(new Cradz.Card(cardID, whiteCards[i], 1));
+
+        console.log("Added white card " + whiteCards[i] + " (" + cardID + ")");
+
+        cardID++;
+      }
+    }
+    else if (deckInfo.type === "cardcast") {
+      // load cardcast here
+    }
   }
-
+  
   console.log("Decks loaded. " + blackCardDeck.cardCount + " black cards, " + whiteCardDeck.cardCount + " white cards");
 }
 
