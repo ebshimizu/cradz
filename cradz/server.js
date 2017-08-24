@@ -80,11 +80,20 @@ var playersDone;
 var revealHiddenKey;
 var revealCards;
 
+// to prepare for cardcast, available decks will be an object that stores
+// info about how the deck should be accessed. built-in decks will be loaded from
+// disk, cardcast decks will be loaded and stored in a separate object
+var availableDecks;
+var activeDecks = [];
+
 // only a few states here
 // WHITE_CARDS: players can play white cards
 // JUDGE: card czar can act
 // SETUP: internal setup phase
 var currentPhase;
+
+// initialization
+initDeckCache();
 
 // reconnect events:
 // should have client cache the socket id and send that to the server. the server should
@@ -105,6 +114,9 @@ io.on('connection', function (socket) {
   players.forEach(function (player, id, map) {
     socket.emit('newPlayerJoined', id, player.name);
   });
+
+  // send settings data
+  updateSettings(socket);
 
   socket.on('disconnect', function () {
     // want to not really delete the player but instead mark them as offline
@@ -135,8 +147,25 @@ io.on('connection', function (socket) {
     }
     else {
       pointsToWin = points;
+      relaySettings("pointsToWin", pointsToWin);
       console.log("Points to win: " + pointsToWin);
     }
+  });
+
+  socket.on('updateDecks', function (selected) {
+    if (host !== socket.id) {
+      socket.emit('gameError', "stop hacking kid. only the host can change the active decks.");
+    }
+    else {
+      activeDecks = selected;
+      console.log("selected decks: ");
+      console.log(activeDecks);
+      relaySettings("selectedDecks", activeDecks);
+    }
+  });
+
+  socket.on('getDecks', function () {
+    socket.emit('settingsUpdate', { setting: 'selectedDecks', value: activeDecks });
   });
 
   socket.on('startGame', function () {
@@ -413,4 +442,32 @@ function judgePhase() {
 
   // send to all players, allow judge to make a selection
   io.sockets.emit('cardsRevealed', revealCards);
+}
+
+function initDeckCache() {
+  availableDecks = {};
+
+  // check the location where the json files are. Name of the
+  // deck is the name of the json file
+  fs.readdirSync("./data/").forEach(function (file) {
+    if (/[\w\d]+.json/.test(file)) {
+      var name = file.replace(/\.[^/.]+$/, "");
+      availableDecks[name] = { type: "file", path: file };
+      console.log("Found deck: " + file);
+    }
+  });
+
+  console.log(availableDecks);
+}
+
+function updateSettings(socket) {
+  // send available decks
+  socket.emit('availableDecks', { available: availableDecks, selected: activeDecks });
+
+  // send other settings
+  socket.emit('settingsUpdate', { setting: 'pointsToWin', value: pointsToWin });
+}
+
+function relaySettings(settingName, value) {
+  io.sockets.emit('settingsUpdate', { setting: settingName, "value": value });
 }

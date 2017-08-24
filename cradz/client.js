@@ -1,5 +1,6 @@
 ﻿var socket = io('http://localhost');
 var isJudge = false;
+var isHost = false;
 
 $(document).ready(function () {
   // initialization code
@@ -11,6 +12,23 @@ $(document).ready(function () {
   $('#playArea .iso').isotope({
     itemSelector: '.cardGroup',
     layoutMode: 'fitRows'
+  });
+
+  $('#deckList').dropdown({
+    onChange: function (value, text, $selectedItem) {
+      if (isHost)
+        socket.emit('updateDecks', value);
+    }
+  });
+
+  $('#settings .input').change(function () {
+    if (isHost) {
+      var name = $(this).attr("settingName");
+
+      if (name === 'pointsToWin') {
+        socket.emit('setPointsToWin', parseInt($('.input[settingName="' + name + '"] input').val()));
+      }
+    }
   });
 });
 
@@ -172,6 +190,33 @@ function updateCzar(id) {
   $('.item[playerID="' + id + '"]').addClass('judge');
 }
 
+function settingsUpdate(data) {
+  if (data.setting === "selectedDecks") {
+    if (!isHost)
+      $('#deckList').dropdown('set exactly', data.value);
+  }
+  else {
+    $('.input[settingName="' + data.setting + '"] input').val(data.value);
+  }
+}
+
+function updateAvailableDecks(decks) {
+  $('#deckList').html('');
+  $('#deckList').remove('a');
+  for (var name in decks.available) {
+    $('#deckList').append('<option>' + name + '</option>');
+  }
+
+  // update the selection
+  socket.emit('getDecks');
+}
+
+function setHost() {
+  isHost = true;
+  $('#settings .ui').removeClass("disabled");
+  console.log("You have been selected as Host.");
+}
+
 // stubbing events the socket can respond to.
 socket.on('connect', function () {
   console.log("Connected to server.");
@@ -183,9 +228,7 @@ socket.on('connect', function () {
   }).modal('show')
 });
 
-socket.on('setHost', function () {
-  console.log("You have been selected as Host.");
-});
+socket.on('setHost', setHost);
 
 socket.on('gameError', function (message) {
   console.log("Error: " + message);
@@ -253,6 +296,8 @@ socket.on('playerDC', function (id) {
 socket.on('updateScores', updateScores);
 socket.on('whoIsCardCzar', updateCzar);
 socket.on('setTurnOrder', setTurnOrder);
+socket.on('settingsUpdate', settingsUpdate);
+socket.on('availableDecks', updateAvailableDecks);
 
 // stubbing events the socket can initiate
 function setName(name) {

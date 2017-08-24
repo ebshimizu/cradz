@@ -15,6 +15,22 @@
 <body>
     <div id="globalWrapper">
         <div id="field">
+            <div id="settings" class="ui raised segment">
+                <div class="ui header">Game Settings</div>
+                <div class="ui horizontal divider">Active Decks</div>
+                <select class="ui fluid search disabled dropdown" multiple="" id="deckList">
+                    <option value="">Decks</option>
+                    <option value="base">Base Set</option>
+                    <option value="other">some other set</option>
+                </select>
+                <div class="ui horizontal divider">Other Options</div>
+                <div class="ui labeled disabled input" settingName="pointsToWin">
+                    <div class="ui label">
+                        Points to Win
+                    </div>
+                    <input type="text" value="8">
+                </div>
+            </div>
             <div id="blackCard">
             </div>
             <div id="playArea">
