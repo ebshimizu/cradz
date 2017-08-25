@@ -34,7 +34,9 @@ $(document).ready(function () {
   $('#startGame').click(function () {
     if (isHost)
       socket.emit('startGame');
-  })
+  });
+
+  $('#hostLabel').hide();
 });
 
 // ui functions
@@ -64,6 +66,7 @@ function updateBlackCard(card) {
 
   // also clear the play area
   $('#playArea .iso').isotope('remove', $('.cardGroup')).isotope('layout');
+  $('#scoreboard .item').removeClass("winner");
 }
 
 function addWhiteCardToHand(card) {
@@ -222,7 +225,14 @@ function updateAvailableDecks(decks) {
 function setHost() {
   isHost = true;
   $('#settings .ui').removeClass("disabled");
+  $('#hostLabel').show();
   console.log("You have been selected as Host.");
+}
+
+function highlightWinner(groupID, playerID) {
+  // change the card class
+  $('.cardGroup[groupID="' + groupID + '"]').addClass("winner");
+  $('.item[playerID="' + playerID + '"]').addClass("winner");
 }
 
 // stubbing events the socket can respond to.
@@ -260,6 +270,7 @@ socket.on('gameStart', initUI);
 
 socket.on('setCardCzar', function () {
   isJudge = true;
+  $('#hand').scrollTop(0);
   $('#judgeDimmer').dimmer('show');
   console.log("you are the card czar for this turn");
 });
@@ -306,6 +317,7 @@ socket.on('whoIsCardCzar', updateCzar);
 socket.on('setTurnOrder', setTurnOrder);
 socket.on('settingsUpdate', settingsUpdate);
 socket.on('availableDecks', updateAvailableDecks);
+socket.on('winningCard', highlightWinner);
 
 // stubbing events the socket can initiate
 function setName(name) {

@@ -269,26 +269,27 @@ io.on('connection', function (socket) {
       });
       io.sockets.emit('updateScores', scores);
 
-      // players draw cards
-      players.forEach(function (player, id, map) {
-        if (id === cardCzar)
-          return;
+      // tell everyone who won, then execute the rest of this function
+      io.sockets.emit('winningCard', groupID, key);
+      setTimeout(function () {
+        // players draw cards
+        players.forEach(function (player, id, map) {
+          if (id === cardCzar)
+            return;
 
-        for (var i = 0; i < player.pick; i++) {
-          player.addToHand(whiteCardDeck.draw());
-        }
-      });
+          for (var i = 0; i < player.pick; i++) {
+            player.addToHand(whiteCardDeck.draw());
+          }
+        });
 
-      // TODO: This should be on a delay
-      // control transfers to next card czar
-      setCardCzar();
+        // TODO: This should be on a delay
+        // control transfers to next card czar
+        setCardCzar();
 
-      // turn resets
-      startTurn();
+        // turn resets
+        startTurn();
+      }, 4000);
     }
-
-    // players draw cards (except card czar)
-    // control transfers to next card czar
   });
 });
 
