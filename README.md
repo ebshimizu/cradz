@@ -2,20 +2,12 @@
 
 Cradz is yet another cards against humanity clone, this time written in node.js.
 
-At this time, Cradz supports basically nothing because it's brand new. In fact, here's a list
-of things it doesn't do:
-* Have a (fully working) UI
-* Let anyone be the host
-* Let you use anything except the base set
-* Have a lobby
-
 Here's a list of things it does do:
-* you can play white cards
-* but the rest of it is on the command line
+* Let you play a single instance of cards against humanity on a server of your choice.
 
-Will it do some things eventually? Probably. It's not intended right now to be a service, but it is
-meant to let you set up a nice looking version of cah on your own server if you have the
-technical know-how to do that.
+Here's what it doesn't do right now:
+* Let anyone be the host
+* Have a lobby (you can't run this as a service very easily)
 
 ## Installation
 Clone into directory. Go to the `cradz` directory and run `npm install`.
@@ -25,6 +17,9 @@ To get semantic ui working, go to the created `semantic` directory and run
 ## Running the Server
 `node server.js`
 
-Then open a browser and go to `localhost`. If you are actually trying to run this
-project right now, you should look at the `client.js` file to figure out the
-available commands.
+Then open a browser and go to `localhost`.
+
+### Third-Party Libraries
+* Card lists from JSON Against Humanity: https://www.crhallberg.com/cah/json/
+* Uses isotope.js: https://isotope.metafizzy.co/
+* Uses Semantic UI: http://semantic-ui.com/
