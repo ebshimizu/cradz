@@ -235,6 +235,20 @@ function highlightWinner(groupID, playerID) {
   $('.item[playerID="' + playerID + '"]').addClass("winner");
 }
 
+function showErrorMessage(text) {
+  var elem = $('<div class="ui floating error message"></div>');
+  elem.text(text);
+  $('#notices').prepend(elem);
+
+  setTimeout(function () {
+    elem.transition('fade out', 250, function () {
+      elem.remove();
+    });
+  }, 3000);
+
+  console.log(text);
+}
+
 // stubbing events the socket can respond to.
 socket.on('connect', function () {
   console.log("Connected to server.");
@@ -249,13 +263,14 @@ socket.on('connect', function () {
 socket.on('setHost', setHost);
 
 socket.on('gameError', function (message) {
-  console.log("Error: " + message);
+  showErrorMessage("Error: " + message);
 });
 
 socket.on('cardCountFail', function (rw, rb, hw, hb) {
-  console.log("Game failed to start! Not enough cards.");
-  console.log("White cards: " + hw + " / " + rw);
-  console.log("Black cards: " + hb + " / " + rb);
+  var err = "Error: Game failed to start! Not enough cards.";
+  err += "<br />White cards: " + hw + " / " + rw;
+  err += "<br />Black cards: " + hb + " / " + rb;
+  showErrorMessage(err);
 });
 
 socket.on('clearHand', function () {

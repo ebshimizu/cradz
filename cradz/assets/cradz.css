@@ -159,3 +159,12 @@
 #hand .iso {
     width: 100%;
 }
+
+#notices {
+    display: block;
+    width: 50%;
+    bottom: 10px;
+    left: 25%;
+    position: absolute;
+    z-index: 200;
+}
