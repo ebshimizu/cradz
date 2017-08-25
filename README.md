@@ -23,3 +23,6 @@ Then open a browser and go to `localhost`.
 * Card lists from JSON Against Humanity: https://www.crhallberg.com/cah/json/
 * Uses isotope.js: https://isotope.metafizzy.co/
 * Uses Semantic UI: http://semantic-ui.com/
+
+### License
+* This project follows the same license as Cards Against Humanity: CC-BY-NC-SA (https://creativecommons.org/licenses/by-nc-sa/2.0/)
