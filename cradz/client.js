@@ -37,6 +37,22 @@ $(document).ready(function () {
   });
 
   $('#hostLabel').hide();
+
+  $('#cardcastButton').click(function () {
+    $('#cardcastImport').modal({
+      onApprove: function () {
+        if (isHost) {
+          socket.emit('cardcastImport', $('#cardcastID input').val());
+          // wait for server to complete import
+          return false;
+        }
+        else {
+          // if not host return anyway
+          return true;
+        }
+      }
+    }).modal('show');
+  });
 });
 
 // ui functions
@@ -333,6 +349,12 @@ socket.on('setTurnOrder', setTurnOrder);
 socket.on('settingsUpdate', settingsUpdate);
 socket.on('availableDecks', updateAvailableDecks);
 socket.on('winningCard', highlightWinner);
+socket.on('cardcastImportComplete', function (info) {
+  $('#cardcastImport').modal('hide');
+
+  updateAvailableDecks(info);
+  setTimeout(function () { $('#deckList').dropdown('set exactly', info.selected); }, 500);
+});
 
 // stubbing events the socket can initiate
 function setName(name) {

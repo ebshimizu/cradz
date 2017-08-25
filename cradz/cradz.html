@@ -34,6 +34,9 @@
                     </div>
                     <input type="text" value="8">
                 </div>
+                <div class="ui blue disabled button" id="cardcastButton">
+                    Import Cardcast Deck
+                </div>
                 <div class="ui green disabled button" id="startGame">
                     Start Game
                 </div>
@@ -89,6 +92,30 @@
         <div class="actions">
             <div class="ui positive right labeled icon button">
                 Join
+                <i class="checkmark icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="ui mini modal" id="cardcastImport">
+        <div class="header">
+            Import from Cardcast
+        </div>
+        <div class="content">
+            <p>Enter the Play Code for your Cardcast deck.</p>
+            <div class="ui labeled input" id="cardcastID">
+                <div class="ui label">
+                    Play Code
+                </div>
+                <input type="text">
+            </div>
+        </div>
+        <div class="actions">
+            <div class="ui negative right labeled icon button">
+                Cancel
+                <i class="close icon"></i>
+            </div>
+            <div class="ui positive right labeled icon button">
+                Import
                 <i class="checkmark icon"></i>
             </div>
         </div>

@@ -1,7 +1,9 @@
 var app = require('http').createServer(handler)
 var io = require('socket.io')(app);
 var fs = require('fs');
-var Cradz = require('./Cradz.js')
+var Cradz = require('./Cradz.js');
+var cc = require('cardcast-api');
+var cardcastApi = new cc.CardcastAPI();
 
 // server crap
 app.listen(80);
@@ -85,6 +87,9 @@ var revealCards;
 // disk, cardcast decks will be loaded and stored in a separate object
 var availableDecks;
 var activeDecks = [];
+
+// loaded deck cache. keys correspond to the keys in available
+var deckCache;
 
 // only a few states here
 // WHITE_CARDS: players can play white cards
@@ -291,6 +296,15 @@ io.on('connection', function (socket) {
       }, 4000);
     }
   });
+
+  socket.on('cardcastImport', function (deckCode) {
+    if (host !== socket.id) {
+      socket.emit('gameError', "Only hosts can import decks. Ask your host if your Cardcast deck is right for your group today.");
+    }
+    else {
+      importCardcast(deckCode);
+    }
+  });
 });
 
 // game functions
@@ -309,34 +323,40 @@ function loadDecks() {
   for (var i in activeDecks) {
     var deckInfo = availableDecks[activeDecks[i]];
 
+    var blackCards;
+    var whiteCards;
+
     if (deckInfo.type === "file") {
       // load from a file
       var cardSet = JSON.parse(fs.readFileSync('./data/' + deckInfo.path));
 
       // load black cards
-      var blackCards = cardSet["blackCards"];
-
-      for (var i in blackCards) {
-        var c = blackCards[i];
-        blackCardDeck.addCard(new Cradz.Card(cardID, c.text, c.pick));
-
-        console.log("Added black card " + c.text + " (" + cardID + ")");
-
-        cardID++;
-      }
-
-      // white cards
-      var whiteCards = cardSet["whiteCards"];
-      for (var i in whiteCards) {
-        whiteCardDeck.addCard(new Cradz.Card(cardID, whiteCards[i], 1));
-
-        console.log("Added white card " + whiteCards[i] + " (" + cardID + ")");
-
-        cardID++;
-      }
+      blackCards = cardSet.blackCards;
+      whiteCards = cardSet.whiteCards;
     }
-    else if (deckInfo.type === "cardcast") {
+    else if (deckInfo.type === "cached") {
       // load cardcast here
+      var cardSet = deckCache[deckInfo.name];
+      blackCards = cardSet.blackCards;
+      whiteCards = cardSet.whiteCards;
+    }
+
+    for (var i in blackCards) {
+      var c = blackCards[i];
+      blackCardDeck.addCard(new Cradz.Card(cardID, c.text, c.pick));
+
+      console.log("Added black card " + c.text + " (" + cardID + ")");
+
+      cardID++;
+    }
+
+    // white cards
+    for (var i in whiteCards) {
+      whiteCardDeck.addCard(new Cradz.Card(cardID, whiteCards[i], 1));
+
+      console.log("Added white card " + whiteCards[i] + " (" + cardID + ")");
+
+      cardID++;
     }
   }
   
@@ -457,6 +477,7 @@ function judgePhase() {
 
 function initDeckCache() {
   availableDecks = {};
+  deckCache = {};
 
   // check the location where the json files are. Name of the
   // deck is the name of the json file
@@ -469,6 +490,46 @@ function initDeckCache() {
   });
 
   console.log(availableDecks);
+}
+
+function importCardcast(deckCode) {
+  cardcastApi.deck(deckCode).then(function (deck) {
+    deck.populatedPromise.then(function () {
+      var cacheObj = { name: deck.name };
+
+      // format calls
+      var blackCards = [];
+      for (var i in deck.calls) {
+        var text = deck.calls[i].text.join('_');
+        var pick = deck.calls[i].text.length - 1;
+        blackCards.push({ 'text': text, 'pick': pick, 'set': deck.name });
+      }
+
+      var whiteCards = [];
+      for (var i in deck.responses) {
+        whiteCards.push(deck.responses[i].text);
+      }
+
+      cacheObj.blackCards = blackCards;
+      cacheObj.whiteCards = whiteCards;
+
+      deckCache[deck.name] = cacheObj;
+      availableDecks[deck.name] = { type: 'cached', name: deck.name };
+      console.log("Imported cardcast deck " + deck.name + " (" + deckCode + ") with " + deck.calls.length + " black cards and " + deck.responses.length + " white cards.");
+
+      // assume people want to use the deck immediately
+      activeDecks.push(deck.name);
+
+      console.log("Now using the following decks:");
+      console.log(activeDecks);
+
+      // host changes
+      players.get(host).socket.emit('cardcastImportComplete', { available: availableDecks, selected: activeDecks });
+
+      // everyone else
+      io.sockets.emit('availableDecks', { available: availableDecks, selected: activeDecks });
+    });
+  });
 }
 
 function updateSettings(socket) {
