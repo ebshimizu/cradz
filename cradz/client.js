@@ -43,7 +43,7 @@ $(document).ready(function () {
 function createBlackCard(text, pick) {
   var html = '<div class="ui fluid card">';
   html += '<div class="content">';
-  html += '<div class="header">' + text + '</div>';
+  html += '<div class="header">' + text.replace(/_/g, '_____') + '</div>';
   html += '<div class="meta">Pick ' + pick + '</div>';
   html += '</div></div>';
 
