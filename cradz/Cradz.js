@@ -9,6 +9,12 @@
     this.name = '';
   }
 
+  reset() {
+    this.clearHand();
+    this.unsetJudge();
+    this.points = 0;
+  }
+
   clearHand() {
     this.hand = new Map();
     this.socket.emit('clearHand');

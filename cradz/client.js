@@ -265,6 +265,34 @@ function showErrorMessage(text) {
   console.log(text);
 }
 
+function showGameOver(winner) {
+  $('#gameOver .winnerName').text(winner);
+  if (isHost) {
+    $('#gameOver .button').removeClass('disabled');
+  }
+
+  $('#gameOver').modal({
+    closable: false,
+    onApprove: function () {
+      if (isHost) {
+        socket.emit('reset');
+      }
+      // wait for server to init new game
+      return false;
+    }
+  }).modal('show');
+}
+
+socket.on('resetReady', resetGame);
+function resetGame() {
+  $('#gameOver').modal('hide');
+  $('#scoreboard .item').removeClass("judge").removeClass("winner");
+  $('#playArea .iso').isotope('remove', $('.cardGroup')).isotope('layout');
+  $('#blackCard').html('');
+
+  $('#settings').transition('drop in');
+}
+
 // stubbing events the socket can respond to.
 socket.on('connect', function () {
   console.log("Connected to server.");
@@ -291,7 +319,7 @@ socket.on('cardCountFail', function (rw, rb, hw, hb) {
 
 socket.on('clearHand', function () {
   // delete hand stuff
-  $('#hand .iso').html('');
+  $('#hand .iso').isotope('remove', $('#hand .iso .card')).isotope('layout');
 
   console.log('Hand cleared');
 });
@@ -329,9 +357,7 @@ socket.on('cardsRevealed', function (cards) {
   revealPlaceholders(cards);
 });
 
-socket.on('gameOver', function (winner) {
-  console.log(winner + " won the game!");
-});
+socket.on('gameOver', showGameOver);
 
 socket.on('newPlayerJoined', function (id, displayName) {
   // scoreboard update with new player

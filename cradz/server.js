@@ -260,13 +260,6 @@ io.on('connection', function (socket) {
       players.get(key).addPoint();
       console.log("Player " + key + " won. Now has " + players.get(key).points + " points");
 
-      // check victory conditions
-      if (players.get(key).points >= pointsToWin) {
-        io.sockets.emit("gameOver", player.get(key).name);
-        // something something reset to config menu
-        return;
-      }
-
       // update scores
       var scores = {};
       players.forEach(function (player, id, map) {
@@ -276,6 +269,15 @@ io.on('connection', function (socket) {
 
       // tell everyone who won, then execute the rest of this function
       io.sockets.emit('winningCard', groupID, key);
+
+      // check victory conditions
+      if (players.get(key).points >= pointsToWin) {
+        io.sockets.emit("gameOver", players.get(key).name);
+
+        // host can initiate new game
+        return;
+      }
+
       setTimeout(function () {
         // players draw cards
         players.forEach(function (player, id, map) {
@@ -305,6 +307,15 @@ io.on('connection', function (socket) {
       importCardcast(deckCode);
     }
   });
+
+  socket.on('reset', function () {
+    if (host !== socket.id) {
+      socket.emit('gameError', "Only hosts can initiate resets");
+    }
+    else {
+      reset();
+    }
+  })
 });
 
 // game functions
@@ -542,4 +553,17 @@ function updateSettings(socket) {
 
 function relaySettings(settingName, value) {
   io.sockets.emit('settingsUpdate', { setting: settingName, "value": value });
+}
+
+function reset() {
+  // reset players
+  var scores = {};
+  players.forEach(function (player, id, map) {
+    player.reset();
+    scores[id] = player.points;
+  });
+  io.sockets.emit('updateScores', scores);
+
+  // that's basically it. Most things get reconstructed anyway
+  io.sockets.emit('resetReady');
 }
